@@ -2,6 +2,7 @@ import numpy as np
 from utils import  decode_captions
 
 import torch
+from tqdm import tqdm
 
 
 class Trainer(object):
@@ -24,7 +25,7 @@ class Trainer(object):
         #TODO - Compute cross entropy loss between predictions and labels. 
         #Make sure to compute this loss only for indices where label is not the null token.
         #The loss should be averaged over batch and sequence dimensions. 
-        mask = (labels != 0)  # 假设 <NULL> 的索引为 0
+        mask = (labels != self.model._null)  # 假设 <NULL> 的索引为 0
         # 选择有效的预测和标签
         predictions = predictions[mask].to(self.device)
         labels = labels[mask].to(self.device)
@@ -54,11 +55,12 @@ class Trainer(object):
         """
         Run optimization to train the model.
         """
-        for i in range(self.num_epochs):
+        for i in tqdm(range(self.num_epochs)):
             epoch_loss = 0
             num_batches = 0
             for batch in self.train_dataloader:
                 features, captions = batch[0].to(self.device), batch[1].to(self.device)
+                # print(f'in train, feature shape & caption shape {features.shape, captions.shape, features[0], captions[0]}')
                 logits = self.model(features, captions[:, :-1])
 
                 loss = self.loss(logits, captions[:, 1:])
