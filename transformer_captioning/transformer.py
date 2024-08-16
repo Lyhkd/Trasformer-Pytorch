@@ -108,24 +108,33 @@ class PositionalEncoding(nn.Module):
         # TODO - use torch.nn.Embedding to create the encoding. Initialize dropout layer.
         self.dropout = nn.Dropout(dropout)
         # 创建位置编码矩阵
-        pe = torch.zeros(max_len, embed_dim)
-        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, embed_dim, 2).float() * (-math.log(10000.0) / embed_dim))
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        # [max_len, d_model] -> [1, max_len, d_model] -> [max_len, 1, d_model]
-        pe = pe.unsqueeze(0).transpose(0, 1)
-        self.register_buffer('pe', pe)
+        # pe = torch.zeros(max_len, embed_dim)
+        # position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        # div_term = torch.exp(torch.arange(0, embed_dim, 2).float() * (-math.log(10000.0) / embed_dim))
+        # pe[:, 0::2] = torch.sin(position * div_term)
+        # pe[:, 1::2] = torch.cos(position * div_term)
+        # # [max_len, d_model] -> [1, max_len, d_model] -> [max_len, 1, d_model]
+        # pe = pe.unsqueeze(0).transpose(0, 1)
+        # self.register_buffer('pe', pe)
+        
+        
+        self.embedding = nn.Embedding(max_len, embed_dim)
       
     def forward(self, x):
         N, S, D = x.shape
         # TODO - add the encoding to x
         
         # print(x.shape, self.pe.shape)
-        x=x.transpose(0,1)
-        x = x + self.pe[:x.size(0)]
-        output =x.transpose(0,1)
-        output = self.dropout(output)
+        
+        # x=x.transpose(0,1)
+        # x = x + self.pe[:x.size(0)]
+        # output =x.transpose(0,1)
+        # output = self.dropout(output)
+        
+        #### learnable positional encoding #### 
+        output = x.transpose(0,1) + self.embedding(torch.arange(S).to(x.device)).unsqueeze(0).transpose(0,1)
+        output = self.dropout(output.transpose(0,1))
+        
         return output
 
 

@@ -8,6 +8,9 @@ from matplotlib import pyplot as plt
 
 set_all_seeds(42) ### DO NOT CHANGE THIS LINE
 exp_name = 'case1'
+dir_path = os.path.dirname(os.path.realpath(__file__))
+os.makedirs(os.path.join(dir_path, 'models'), exist_ok=True)
+model_path = os.path.join(dir_path, 'models', '%s_model.pth' % exp_name)
 
 train_dataset = CocoDataset(load_coco_data(max_train=1024), 'train')
 train_dataloader =  DataLoader(train_dataset, batch_size=64)
@@ -31,10 +34,13 @@ transformer = TransformerDecoder(
 trainer = Trainer(transformer, train_dataloader, val_dataloader,
           num_epochs=100,
           learning_rate=1e-3,
-          device = device
+          device = device,
+          model_path=model_path,
         )
 
 trainer.train()
+
+trainer.save_model()
 
 # Plot the training losses.
 plt.plot(trainer.loss_history)
@@ -52,12 +58,13 @@ def vis_imgs(split):
     for batch in loader:
       features, gt_captions, idxs = batch
       urls = data["%s_urls" % split][idxs]
-      
+      # print(f'idxs: {idxs} in vis_img get url: {urls}')
       gt_captions = decode_captions(gt_captions, transformer.idx_to_word)
       sample_captions = transformer.sample(features, max_length=30)
       sample_captions = decode_captions(sample_captions, transformer.idx_to_word)
       
       for gt_caption, sample_caption, url in zip(gt_captions, sample_captions, urls):
+          
           img = image_from_url(url)
           # Skip missing URLs.
           if img is not None: 

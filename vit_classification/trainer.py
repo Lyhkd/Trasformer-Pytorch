@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from vit import ViT
+from tqdm import tqdm
 
 class Trainer:
     def __init__(self, model, train_dataloader, test_dataloader, learning_rate = 0.001, batch_size = 100, 
@@ -49,17 +50,19 @@ class Trainer:
 
         
         # TODO - Compute cross entropy loss between predictions and labels. 
-        loss = None
+        loss = torch.nn.functional.cross_entropy(predictions,labels)
         
 
         return loss
 
     def train(self):
-        for i in range(self.num_epochs):
+        for i in tqdm(range(self.num_epochs)):
             epoch_loss = 0
             num_batches = 0
-
+            i = 0
             for images, labels in self.train_dataloader:
+                # print(i)
+                # i += 1
                 images = images.to(self.device)
                 labels = labels.to(self.device)
                 logits = self.model(images)
